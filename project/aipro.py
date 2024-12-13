@@ -23,73 +23,60 @@ class GovindaGame:
     def __init__(self, root):
         self.root = root
         self.root.title("Govinda Game")
-        self.root.geometry("600x600")
+        self.root.geometry("700x700")
+        self.root.config(bg="#f2f2f2")
 
-        # Load matki image and resize
         original_image = Image.open("matki.png")
         self.matki_image = original_image.resize((50, 50), Image.Resampling.LANCZOS)
         self.matki_photo = ImageTk.PhotoImage(self.matki_image)
 
-        # Frame for difficulty selection
-        self.difficulty_frame = tk.Frame(root)
-        self.difficulty_frame.pack(pady=20)
+        self.player_pyramid_layer = 8
+        self.ai_pyramid_layer = 8
+        self.current_turn = "player"
 
-        # Difficulty selection
+        self.difficulty_frame = tk.Frame(root, bg="#f2f2f2")
+        self.difficulty_frame.pack(pady=30)
+
         self.difficulty_var = tk.StringVar(value="easy")
 
-        tk.Label(self.difficulty_frame, text="Select Difficulty:", font=("Arial", 16)).pack()
-        tk.Radiobutton(self.difficulty_frame, text="Easy", variable=self.difficulty_var, value="easy", font=("Arial", 14)).pack()
-        tk.Radiobutton(self.difficulty_frame, text="Medium", variable=self.difficulty_var, value="medium", font=("Arial", 14)).pack()
-        tk.Radiobutton(self.difficulty_frame, text="Hard", variable=self.difficulty_var, value="hard", font=("Arial", 14)).pack()
+        tk.Label(self.difficulty_frame, text="Select Difficulty", font=("Helvetica", 20, "bold"), bg="#f2f2f2").pack(pady=10)
+        
+        for level in ["easy", "medium", "hard"]:
+            tk.Radiobutton(self.difficulty_frame, text=level.capitalize(), variable=self.difficulty_var, value=level, font=("Helvetica", 14), bg="#f2f2f2").pack(anchor=tk.W, padx=20)
 
-        # Start button
-        self.start_button = tk.Button(self.difficulty_frame, text="Start Game", command=self.start_game)
-        self.start_button.pack(pady=10)
+        self.start_button = tk.Button(self.difficulty_frame, text="Start Game", command=self.start_game, font=("Helvetica", 14, "bold"), bg="#4CAF50", fg="white", relief="raised", padx=20, pady=10)
+        self.start_button.pack(pady=20)
 
     def start_game(self):
         self.difficulty = self.difficulty_var.get()
-        self.difficulty_frame.pack_forget()  # Hide difficulty selection frame
+        self.difficulty_frame.pack_forget()
 
-        # Player and AI stats
-        self.player_pyramid_layer = 8  # Pyramid starts with 8 layers
-        self.ai_pyramid_layer = 8
-
-        self.current_turn = "player"  # Start with the player
-
-        # Frame for the question
-        self.question_frame = tk.Frame(self.root)
+        self.question_frame = tk.Frame(self.root, bg="#f2f2f2")
         self.question_frame.pack(pady=20)
 
-        # Question label
-        self.question_label = tk.Label(self.question_frame, text="", font=("Arial", 16))
+        self.question_label = tk.Label(self.question_frame, text="", font=("Helvetica", 16, "bold"), bg="#f2f2f2")
         self.question_label.pack()
 
-        # Frame for answer options
-        self.options_frame = tk.Frame(self.root)
+        self.options_frame = tk.Frame(self.root, bg="#f2f2f2")
         self.options_frame.pack(pady=20)
 
-        # Initialize radio buttons for answer options
         self.option_vars = tk.StringVar()
         self.option_vars.set(None)
 
         self.option_buttons = []
-        for i in range(4):  # Up to 4 options
-            option_button = tk.Radiobutton(self.options_frame, text="", variable=self.option_vars, value="", font=("Arial", 14))
-            option_button.pack(anchor=tk.W)
+        for i in range(4):
+            option_button = tk.Radiobutton(self.options_frame, text="", variable=self.option_vars, value="", font=("Helvetica", 14), bg="#f2f2f2", selectcolor="#4CAF50")
+            option_button.pack(anchor=tk.W, padx=20)
             self.option_buttons.append(option_button)
 
-        # Submit button
-        self.submit_button = tk.Button(self.root, text="Submit", command=self.check_answer)
+        self.submit_button = tk.Button(self.root, text="Submit", command=self.check_answer, font=("Helvetica", 14, "bold"), bg="#FF6347", fg="white", relief="raised", padx=20, pady=10)
         self.submit_button.pack()
 
-        # Frame for the tower (Govinda pyramid)
-        self.tower_frame = tk.Canvas(self.root, width=600, height=450, bg="lightblue")
+        self.tower_frame = tk.Canvas(self.root, width=600, height=450, bg="#ADD8E6", bd=0, highlightthickness=0)
         self.tower_frame.pack(pady=20)
 
-        # Display matki image at the top center of the tower frame
         self.matki_id = self.tower_frame.create_image(300, 50, anchor=tk.N, image=self.matki_photo)
 
-        # Ask first question
         self.ask_question()
 
     def ask_question(self):
@@ -102,7 +89,6 @@ class GovindaGame:
             for i, option in enumerate(options):
                 self.option_buttons[i].config(text=option, value=option)
         else:
-            # AI's turn to answer the question
             self.ai_answer()
 
     def check_answer(self):
@@ -113,27 +99,22 @@ class GovindaGame:
             self.player_pyramid_layer -= 1
             self.add_player_layer()
             if self.player_pyramid_layer < 0:
-                messagebox.showinfo("You Won!", "You won, Broke the Matki!")
-                self.reset_game()
+                self.end_game("You won, Broke the Matki!")
         else:
             messagebox.showerror("Wrong Answer", "Incorrect! Try again.")
 
-        # AI's turn next
         self.current_turn = "ai"
         self.ask_question()
 
     def ai_answer(self):
-        # AI will answer the question (simulate with a random correct or incorrect answer)
         if random.choice([True, False]):
             self.ai_pyramid_layer -= 1
             self.add_ai_layer()
             if self.ai_pyramid_layer < 0:
-                messagebox.showinfo("AI Won", "AI won, Broke the Matki!")
-                self.reset_game()
+                self.end_game("AI won, Broke the Matki!")
         else:
             messagebox.showinfo("AI Wrong Answer", "AI made a mistake!")
 
-        # Player's turn next
         self.current_turn = "player"
         self.ask_question()
 
@@ -144,26 +125,31 @@ class GovindaGame:
         self.draw_pyramid_layer(self.ai_pyramid_layer, "red")
 
     def draw_pyramid_layer(self, layer, color):
-        # Calculate the position for the current layer
-        y = 450 - ((8 - layer) * 60)  # Draw from the bottom upwards
-        num_people = layer  # Start with 8 people at the base, then decrease
+        y = 450 - ((8 - layer) * 60)
+        num_people = layer
         for i in range(num_people):
-            x = (i * 60) + (300 - (num_people * 30))  # Center people in the layer
+            x = (i * 60) + (300 - (num_people * 30))
             self.draw_stick_figure(x, y, color)
 
     def draw_stick_figure(self, x, y, color):
-        # Draw head (circle)
-        self.tower_frame.create_oval(x+10, y, x+30, y+20, fill=color)  # Head
+        figure_size = 30
+        
+        self.tower_frame.create_oval(x+5, y, x+figure_size, y+figure_size, fill=color, outline="black")
+        self.tower_frame.create_line(x + figure_size // 2, y + figure_size, x + figure_size // 2, y + figure_size + 20, fill=color, width=2)
+        self.tower_frame.create_line(x + 5, y + 15, x + figure_size - 5, y + 15, fill=color, width=2)
+        self.tower_frame.create_line(x + figure_size // 2, y + 20, x + 5, y + 40, fill=color, width=2)
+        self.tower_frame.create_line(x + figure_size // 2, y + 20, x + figure_size - 5, y + 40, fill=color, width=2)
 
-        # Draw body
-        self.tower_frame.create_line(x+20, y+20, x+20, y+50, fill=color, width=2)  # Body
+    def end_game(self, message):
+        messagebox.showinfo("Game Over", message)
+        self.ask_restart()
 
-        # Draw arms
-        self.tower_frame.create_line(x+5, y+30, x+35, y+30, fill=color, width=2)  # Arms
-
-        # Draw legs
-        self.tower_frame.create_line(x+20, y+50, x+10, y+70, fill=color, width=2)  # Left leg
-        self.tower_frame.create_line(x+20, y+50, x+30, y+70, fill=color, width=2)  # Right leg
+    def ask_restart(self):
+        restart = messagebox.askyesno("Restart", "Do you want to play again?")
+        if restart:
+            self.reset_game()
+        else:
+            self.root.quit()
 
     def reset_game(self):
         self.tower_frame.delete("all")
